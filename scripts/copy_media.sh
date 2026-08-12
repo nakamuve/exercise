@@ -7,8 +7,8 @@ DATASET="${1:-../exercises-dataset}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if [[ ! -d "$DATASET/images" || ! -d "$DATASET/videos" ]]; then
-  echo "error: $DATASET does not look like the exercises-dataset repo" >&2
-  exit 1
+	echo "error: $DATASET does not look like the exercises-dataset repo" >&2
+	exit 1
 fi
 
 mkdir -p "$ROOT/public"

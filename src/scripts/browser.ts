@@ -9,97 +9,96 @@
 export type SideType = "unilateral" | "bilateral" | "either";
 
 export interface Exercise {
-  id: string;
-  name: string;
-  category: string;
-  body_part: string;
-  equipment: string;
-  target: string;
-  muscle_group: string;
-  secondary_muscles: string[];
-  image: string;
-  gif_url: string;
-  instructions: string;
-  steps: string[];
-  side: SideType;
+	id: string;
+	name: string;
+	category: string;
+	body_part: string;
+	equipment: string;
+	target: string;
+	muscle_group: string;
+	secondary_muscles: string[];
+	image: string;
+	gif_url: string;
+	instructions: string;
+	steps: string[];
+	side: SideType;
 }
 
 export const SIDE_LABEL: Record<SideType, string> = {
-  unilateral: "Each side",
-  bilateral: "Both sides",
-  either: "Either way",
+	unilateral: "Each side",
+	bilateral: "Both sides",
+	either: "Either way",
 };
 
 export const SIDE_SHORT: Record<SideType, string> = {
-  unilateral: "each side",
-  bilateral: "both sides",
-  either: "either way",
+	unilateral: "each side",
+	bilateral: "both sides",
+	either: "either way",
 };
 
 /** Why each mode matters — the coaching rationale for this feature. */
 export const SIDE_RATIONALE: Record<
-  SideType,
-  { title: string; points: string[]; tag: string }
+	SideType,
+	{ title: string; points: string[]; tag: string }
 > = {
-  unilateral: {
-    title: "Performed one side at a time",
-    points: [
-      "A lighter load per side means you can slow the lowering (eccentric) phase and control it far better — the classic way to add eccentric overload.",
-      "Because each side works alone, both sides must be trained in balance: match sets × reps on left and right so one side never outpaces the other.",
-      "Great for fixing strength or size asymmetries and building single-leg / single-arm stability.",
-    ],
-    tag: "balance required",
-  },
-  bilateral: {
-    title: "Performed with both sides together",
-    points: [
-      "Both limbs share the bar, so the total load can be heaviest — the most efficient way to build maximal strength.",
-      "Both sides work simultaneously, so side-to-side balance is less of a concern mid-set.",
-      "The trade-off: a strong side can help carry a weaker one, which can mask an imbalance over time.",
-    ],
-    tag: "biggest load",
-  },
-  either: {
-    title: "Can be done either way",
-    points: [
-      "The movement works with one side at a time or both sides together — your choice depending on the goal.",
-      "Go each side when you want eccentric overload, extra time under tension, or to correct imbalances.",
-      "Go both sides when you want the biggest possible load for the movement.",
-    ],
-    tag: "pick the goal",
-  },
+	unilateral: {
+		title: "Performed one side at a time",
+		points: [
+			"A lighter load per side means you can slow the lowering (eccentric) phase and control it far better — the classic way to add eccentric overload.",
+			"Because each side works alone, both sides must be trained in balance: match sets × reps on left and right so one side never outpaces the other.",
+			"Great for fixing strength or size asymmetries and building single-leg / single-arm stability.",
+		],
+		tag: "balance required",
+	},
+	bilateral: {
+		title: "Performed with both sides together",
+		points: [
+			"Both limbs share the bar, so the total load can be heaviest — the most efficient way to build maximal strength.",
+			"Both sides work simultaneously, so side-to-side balance is less of a concern mid-set.",
+			"The trade-off: a strong side can help carry a weaker one, which can mask an imbalance over time.",
+		],
+		tag: "biggest load",
+	},
+	either: {
+		title: "Can be done either way",
+		points: [
+			"The movement works with one side at a time or both sides together — your choice depending on the goal.",
+			"Go each side when you want eccentric overload, extra time under tension, or to correct imbalances.",
+			"Go both sides when you want the biggest possible load for the movement.",
+		],
+		tag: "pick the goal",
+	},
 };
 
 const PAGE_SIZE = 60;
-
 
 /** Static assets the browser is allowed to fetch — nothing else. */
 const ALLOWED_FETCH = new Set(["data/exercises.json"]);
 
 interface State {
-  side: SideType | "all";
-  q: string;
-  cat: string; // "" = all
-  eq: string; // "" = all
-  target: string; // "" = all
-  sort: "name" | "name-desc";
-  visible: number;
-  order: Exercise[]; // filtered + sorted
-  all: Exercise[];
-  selected: number; // index into order
+	side: SideType | "all";
+	q: string;
+	cat: string; // "" = all
+	eq: string; // "" = all
+	target: string; // "" = all
+	sort: "name" | "name-desc";
+	visible: number;
+	order: Exercise[]; // filtered + sorted
+	all: Exercise[];
+	selected: number; // index into order
 }
 
 const state: State = {
-  side: "all",
-  q: "",
-  cat: "",
-  eq: "",
-  target: "",
-  sort: "name",
-  visible: PAGE_SIZE,
-  order: [],
-  all: [],
-  selected: -1,
+	side: "all",
+	q: "",
+	cat: "",
+	eq: "",
+	target: "",
+	sort: "name",
+	visible: PAGE_SIZE,
+	order: [],
+	all: [],
+	selected: -1,
 };
 
 let rootEl: HTMLElement | null = null;
@@ -113,605 +112,611 @@ let lastFocused: HTMLElement | null = null;
 const BASE = import.meta.env.BASE_URL;
 
 function asset(path: string): string {
-  return BASE.replace(/\/$/, "") + "/" + path.replace(/^\/+/, "");
+	return BASE.replace(/\/$/, "") + "/" + path.replace(/^\/+/, "");
 }
 
 const prefersReducedMotion =
-  typeof window.matchMedia === "function" &&
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+	typeof window.matchMedia === "function" &&
+	window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ---------- tiny DOM helpers ---------- */
 
 function el<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  cls?: string,
+	tag: K,
+	cls?: string,
 ): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag);
-  if (cls) node.className = cls;
-  return node;
+	const node = document.createElement(tag);
+	if (cls) node.className = cls;
+	return node;
 }
 
 function textEl<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  cls: string,
-  text: string,
+	tag: K,
+	cls: string,
+	text: string,
 ): HTMLElementTagNameMap[K] {
-  const node = el(tag, cls);
-  node.textContent = text;
-  return node;
+	const node = el(tag, cls);
+	node.textContent = text;
+	return node;
 }
 
 function chip(text: string, target = false): HTMLElement {
-  const c = el("span", target ? "chip chip--target" : "chip");
-  c.textContent = text;
-  return c;
+	const c = el("span", target ? "chip chip--target" : "chip");
+	c.textContent = text;
+	return c;
 }
 
 /** Clone a static icon from a <template> defined in the component markup. */
 function icon(name: string): DocumentFragment {
-  const tpl = document.getElementById(
-    `icon-${name}`,
-  ) as HTMLTemplateElement | null;
-  if (!tpl) return document.createDocumentFragment();
-  return tpl.content.cloneNode(true) as DocumentFragment;
+	const tpl = document.getElementById(
+		`icon-${name}`,
+	) as HTMLTemplateElement | null;
+	if (!tpl) return document.createDocumentFragment();
+	return tpl.content.cloneNode(true) as DocumentFragment;
 }
 
 function $<T extends HTMLElement = HTMLElement>(
-  sel: string,
-  elm: ParentNode = document,
+	sel: string,
+	elm: ParentNode = document,
 ): T | null {
-  return elm.querySelector<T>(sel);
+	return elm.querySelector<T>(sel);
 }
 
 /** Like $ but throws when the element is missing (markup contract). */
 function req$<T extends HTMLElement = HTMLElement>(
-  sel: string,
-  elm: ParentNode = document,
+	sel: string,
+	elm: ParentNode = document,
 ): T {
-  const node = elm.querySelector<T>(sel);
-  if (!node) throw new Error(`missing expected element: ${sel}`);
-  return node;
+	const node = elm.querySelector<T>(sel);
+	if (!node) throw new Error(`missing expected element: ${sel}`);
+	return node;
 }
 
 /** Fetch a static asset from the allowlist only. */
 async function fetchAsset(path: string): Promise<Response> {
-  if (!ALLOWED_FETCH.has(path)) {
-    throw new Error(`fetch of non-allowlisted asset blocked: ${path}`);
-  }
-  return fetch(new URL(asset(path), document.baseURI).href);
+	if (!ALLOWED_FETCH.has(path)) {
+		throw new Error(`fetch of non-allowlisted asset blocked: ${path}`);
+	}
+	return fetch(new URL(asset(path), document.baseURI).href);
 }
 
 /* ---------- URL sync ---------- */
 
 function readParams(): void {
-  const p = new URLSearchParams(location.search);
-  const side = p.get("side");
-  if (side === "unilateral" || side === "bilateral" || side === "either") {
-    state.side = side;
-  }
-  state.q = p.get("q") ?? "";
-  state.cat = p.get("cat") ?? "";
-  state.eq = p.get("eq") ?? "";
-  state.target = p.get("target") ?? "";
-  if (p.get("sort") === "name-desc") state.sort = "name-desc";
+	const p = new URLSearchParams(location.search);
+	const side = p.get("side");
+	if (side === "unilateral" || side === "bilateral" || side === "either") {
+		state.side = side;
+	}
+	state.q = p.get("q") ?? "";
+	state.cat = p.get("cat") ?? "";
+	state.eq = p.get("eq") ?? "";
+	state.target = p.get("target") ?? "";
+	if (p.get("sort") === "name-desc") state.sort = "name-desc";
 }
 
 function writeParams(): void {
-  const p = new URLSearchParams();
-  if (state.side !== "all") p.set("side", state.side);
-  if (state.q) p.set("q", state.q);
-  if (state.cat) p.set("cat", state.cat);
-  if (state.eq) p.set("eq", state.eq);
-  if (state.target) p.set("target", state.target);
-  if (state.sort !== "name") p.set("sort", state.sort);
-  const qs = p.toString();
-  history.replaceState(null, "", qs ? `?${qs}` : location.pathname);
+	const p = new URLSearchParams();
+	if (state.side !== "all") p.set("side", state.side);
+	if (state.q) p.set("q", state.q);
+	if (state.cat) p.set("cat", state.cat);
+	if (state.eq) p.set("eq", state.eq);
+	if (state.target) p.set("target", state.target);
+	if (state.sort !== "name") p.set("sort", state.sort);
+	const qs = p.toString();
+	history.replaceState(null, "", qs ? `?${qs}` : location.pathname);
 }
 
 /* ---------- filtering ---------- */
 
 function applyFilters(): void {
-  const q = state.q.trim().toLowerCase();
-  state.order = state.all.filter((e) => {
-    if (state.side !== "all" && e.side !== state.side) return false;
-    if (state.cat && e.category !== state.cat) return false;
-    if (state.eq && e.equipment !== state.eq) return false;
-    if (state.target && e.target !== state.target) return false;
-    if (q) {
-      const hay =
-        e.name.toLowerCase() +
-        " " +
-        e.equipment.toLowerCase() +
-        " " +
-        e.target.toLowerCase() +
-        " " +
-        e.muscle_group.toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    return true;
-  });
-  state.order.sort((a, b) =>
-    state.sort === "name-desc"
-      ? b.name.localeCompare(a.name)
-      : a.name.localeCompare(b.name),
-  );
-  state.visible = PAGE_SIZE;
+	const q = state.q.trim().toLowerCase();
+	state.order = state.all.filter((e) => {
+		if (state.side !== "all" && e.side !== state.side) return false;
+		if (state.cat && e.category !== state.cat) return false;
+		if (state.eq && e.equipment !== state.eq) return false;
+		if (state.target && e.target !== state.target) return false;
+		if (q) {
+			const hay =
+				e.name.toLowerCase() +
+				" " +
+				e.equipment.toLowerCase() +
+				" " +
+				e.target.toLowerCase() +
+				" " +
+				e.muscle_group.toLowerCase();
+			if (!hay.includes(q)) return false;
+		}
+		return true;
+	});
+	state.order.sort((a, b) =>
+		state.sort === "name-desc"
+			? b.name.localeCompare(a.name)
+			: a.name.localeCompare(b.name),
+	);
+	state.visible = PAGE_SIZE;
 }
 
 /* ---------- rendering ---------- */
 
 function buildCard(e: Exercise): HTMLButtonElement {
-  const card = el("button", "card") as HTMLButtonElement;
-  card.dataset.id = e.id;
-  card.dataset.side = e.side;
-  card.setAttribute(
-    "aria-label",
-    `${e.name} — ${SIDE_LABEL[e.side]} — ${e.equipment}`,
-  );
+	const card = el("button", "card") as HTMLButtonElement;
+	card.dataset.id = e.id;
+	card.dataset.side = e.side;
+	card.setAttribute(
+		"aria-label",
+		`${e.name} — ${SIDE_LABEL[e.side]} — ${e.equipment}`,
+	);
 
-  const media = el("span", "card__media");
-  const img = el("img");
-  img.src = asset(e.image);
-  img.alt = "";
-  img.loading = "lazy";
-  img.decoding = "async";
-  img.width = 180;
-  img.height = 180;
+	const media = el("span", "card__media");
+	const img = el("img");
+	img.src = asset(e.image);
+	img.alt = "";
+	img.loading = "lazy";
+	img.decoding = "async";
+	img.width = 180;
+	img.height = 180;
 
-  const sideBadge = el("span", "card__side");
-  sideBadge.dataset.side = e.side;
-  sideBadge.append(icon(e.side), textEl("span", "", SIDE_LABEL[e.side]));
-  media.append(img, sideBadge);
+	const sideBadge = el("span", "card__side");
+	sideBadge.dataset.side = e.side;
+	sideBadge.append(icon(e.side), textEl("span", "", SIDE_LABEL[e.side]));
+	media.append(img, sideBadge);
 
-  const body = el("span", "card__body");
-  const name = textEl("span", "card__name", e.name);
-  const meta = el("span", "card__meta");
-  meta.append(chip(e.target, true), chip(e.equipment));
-  body.append(name, meta);
+	const body = el("span", "card__body");
+	const name = textEl("span", "card__name", e.name);
+	const meta = el("span", "card__meta");
+	meta.append(chip(e.target, true), chip(e.equipment));
+	body.append(name, meta);
 
-  card.append(media, body);
+	card.append(media, body);
 
-  if (!prefersReducedMotion) {
-    const gifUrl = asset(e.gif_url);
-    const thumbUrl = asset(e.image);
-    const toGif = () => {
-      img.src = gifUrl;
-    };
-    const toThumb = () => {
-      img.src = thumbUrl;
-    };
-    card.addEventListener("mouseenter", toGif);
-    card.addEventListener("mouseleave", toThumb);
-    card.addEventListener("focus", toGif);
-    card.addEventListener("blur", toThumb);
-  }
+	if (!prefersReducedMotion) {
+		const gifUrl = asset(e.gif_url);
+		const thumbUrl = asset(e.image);
+		const toGif = () => {
+			img.src = gifUrl;
+		};
+		const toThumb = () => {
+			img.src = thumbUrl;
+		};
+		card.addEventListener("mouseenter", toGif);
+		card.addEventListener("mouseleave", toThumb);
+		card.addEventListener("focus", toGif);
+		card.addEventListener("blur", toThumb);
+	}
 
-  card.addEventListener("click", () => openDetail(e.id));
-  return card;
+	card.addEventListener("click", () => openDetail(e.id));
+	return card;
 }
 
 function renderGrid(append = false): void {
-  if (!gridEl) return;
-  const slice = state.order.slice(0, state.visible);
+	if (!gridEl) return;
+	const slice = state.order.slice(0, state.visible);
 
-  if (!append) gridEl.textContent = "";
+	if (!append) gridEl.textContent = "";
 
-  if (state.order.length === 0) {
-    const empty = el("div", "empty");
-    empty.append(
-      textEl("strong", "", "No exercises match your filters"),
-      textEl("span", "", "Try widening the side-mode, category or search terms."),
-    );
-    const reset = el("button", "btn-clear");
-    reset.textContent = "Reset all filters";
-    reset.addEventListener("click", () => {
-      state.side = "all";
-      state.q = "";
-      state.cat = "";
-      state.eq = "";
-      state.target = "";
-      state.sort = "name";
-      syncControls();
-      onFilterChange();
-    });
-    empty.appendChild(reset);
-    gridEl.appendChild(empty);
-    updateCount();
-    updateLoadMore();
-    return;
-  }
+	if (state.order.length === 0) {
+		const empty = el("div", "empty");
+		empty.append(
+			textEl("strong", "", "No exercises match your filters"),
+			textEl(
+				"span",
+				"",
+				"Try widening the side-mode, category or search terms.",
+			),
+		);
+		const reset = el("button", "btn-clear");
+		reset.textContent = "Reset all filters";
+		reset.addEventListener("click", () => {
+			state.side = "all";
+			state.q = "";
+			state.cat = "";
+			state.eq = "";
+			state.target = "";
+			state.sort = "name";
+			syncControls();
+			onFilterChange();
+		});
+		empty.appendChild(reset);
+		gridEl.appendChild(empty);
+		updateCount();
+		updateLoadMore();
+		return;
+	}
 
-  const frag = document.createDocumentFragment();
-  for (const e of slice) frag.appendChild(buildCard(e));
-  gridEl.appendChild(frag);
-  updateCount();
-  updateLoadMore();
+	const frag = document.createDocumentFragment();
+	for (const e of slice) frag.appendChild(buildCard(e));
+	gridEl.appendChild(frag);
+	updateCount();
+	updateLoadMore();
 }
 
 function updateLoadMore(): void {
-  if (!loadMoreEl) return;
-  const more = state.visible < state.order.length;
-  loadMoreEl.hidden = !more;
+	if (!loadMoreEl) return;
+	const more = state.visible < state.order.length;
+	loadMoreEl.hidden = !more;
 }
 
 function updateCount(): void {
-  const elm = $(".result-count", rootEl!);
-  if (!elm) return;
-  elm.textContent = "";
-  const total = state.order.length;
-  const shown = Math.min(state.visible, total);
-  const strong = el("strong");
-  strong.textContent = total.toLocaleString();
-  elm.appendChild(strong);
-  if (state.side !== "all") {
-    elm.append(
-      document.createTextNode(` match · ${SIDE_LABEL[state.side]}`),
-    );
-  } else if (total !== state.all.length) {
-    elm.append(document.createTextNode(" match"));
-  } else {
-    elm.append(document.createTextNode(" exercises"));
-  }
-  if (shown < total) {
-    elm.append(document.createTextNode(` · showing ${shown}`));
-  }
+	const elm = $(".result-count", rootEl!);
+	if (!elm) return;
+	elm.textContent = "";
+	const total = state.order.length;
+	const shown = Math.min(state.visible, total);
+	const strong = el("strong");
+	strong.textContent = total.toLocaleString();
+	elm.appendChild(strong);
+	if (state.side !== "all") {
+		elm.append(document.createTextNode(` match · ${SIDE_LABEL[state.side]}`));
+	} else if (total !== state.all.length) {
+		elm.append(document.createTextNode(" match"));
+	} else {
+		elm.append(document.createTextNode(" exercises"));
+	}
+	if (shown < total) {
+		elm.append(document.createTextNode(` · showing ${shown}`));
+	}
 }
 
 function renderStats(): void {
-  const elm = $(".stats-line", rootEl!);
-  if (!elm) return;
-  const c = { unilateral: 0, bilateral: 0, either: 0 };
-  for (const e of state.all) c[e.side]++;
+	const elm = $(".stats-line", rootEl!);
+	if (!elm) return;
+	const c = { unilateral: 0, bilateral: 0, either: 0 };
+	for (const e of state.all) c[e.side]++;
 
-  elm.textContent = "";
-  const strong = el("strong");
-  strong.textContent = state.all.length.toLocaleString();
-  elm.append(strong, document.createTextNode(" exercises · "));
-  const segs: Array<[number, string, string]> = [
-    [c.unilateral, "stats-uni", "each-side"],
-    [c.bilateral, "stats-bi", "both-sides"],
-    [c.either, "stats-ei", "either-way"],
-  ];
-  segs.forEach(([n, cls, label], i) => {
-    const span = el("span", cls);
-    span.textContent = `${n}`;
-    elm.append(span, document.createTextNode(` ${label}`));
-    if (i < segs.length - 1) elm.append(document.createTextNode(" · "));
-  });
+	elm.textContent = "";
+	const strong = el("strong");
+	strong.textContent = state.all.length.toLocaleString();
+	elm.append(strong, document.createTextNode(" exercises · "));
+	const segs: Array<[number, string, string]> = [
+		[c.unilateral, "stats-uni", "each-side"],
+		[c.bilateral, "stats-bi", "both-sides"],
+		[c.either, "stats-ei", "either-way"],
+	];
+	segs.forEach(([n, cls, label], i) => {
+		const span = el("span", cls);
+		span.textContent = `${n}`;
+		elm.append(span, document.createTextNode(` ${label}`));
+		if (i < segs.length - 1) elm.append(document.createTextNode(" · "));
+	});
 }
 
 function populateSelects(): void {
-  const cats = [...new Set(state.all.map((e) => e.category))].sort();
-  const eqs = [...new Set(state.all.map((e) => e.equipment))].sort();
-  const targets = [...new Set(state.all.map((e) => e.target))].sort();
+	const cats = [...new Set(state.all.map((e) => e.category))].sort();
+	const eqs = [...new Set(state.all.map((e) => e.equipment))].sort();
+	const targets = [...new Set(state.all.map((e) => e.target))].sort();
 
-  const fill = (sel: HTMLSelectElement, values: string[]) => {
-    sel.textContent = "";
-    const all = new Option(sel.dataset.placeholder ?? "All", "");
-    sel.appendChild(all);
-    for (const v of values) sel.appendChild(new Option(v, v));
-  };
-  fill(req$<HTMLSelectElement>('select[data-kind="cat"]', rootEl!), cats);
-  fill(req$<HTMLSelectElement>('select[data-kind="eq"]', rootEl!), eqs);
-  fill(req$<HTMLSelectElement>('select[data-kind="target"]', rootEl!), targets);
+	const fill = (sel: HTMLSelectElement, values: string[]) => {
+		sel.textContent = "";
+		const all = new Option(sel.dataset.placeholder ?? "All", "");
+		sel.appendChild(all);
+		for (const v of values) sel.appendChild(new Option(v, v));
+	};
+	fill(req$<HTMLSelectElement>('select[data-kind="cat"]', rootEl!), cats);
+	fill(req$<HTMLSelectElement>('select[data-kind="eq"]', rootEl!), eqs);
+	fill(req$<HTMLSelectElement>('select[data-kind="target"]', rootEl!), targets);
 }
 
 /* ---------- detail overlay ---------- */
 
 function openDetail(id: string): void {
-  const idx = state.order.findIndex((e) => e.id === id);
-  if (idx < 0) return;
-  state.selected = idx;
-  renderDetail();
-  if (overlayEl) {
-    overlayEl.classList.add("is-open");
-    lastFocused = document.activeElement as HTMLElement;
-    document.body.style.overflow = "hidden";
-    $(".icon-btn--close", overlayEl)?.focus();
-  }
+	const idx = state.order.findIndex((e) => e.id === id);
+	if (idx < 0) return;
+	state.selected = idx;
+	renderDetail();
+	if (overlayEl) {
+		overlayEl.classList.add("is-open");
+		lastFocused = document.activeElement as HTMLElement;
+		document.body.style.overflow = "hidden";
+		$(".icon-btn--close", overlayEl)?.focus();
+	}
 }
 
 function closeDetail(): void {
-  if (!overlayEl) return;
-  overlayEl.classList.remove("is-open");
-  document.body.style.overflow = "";
-  lastFocused?.focus();
-  state.selected = -1;
+	if (!overlayEl) return;
+	overlayEl.classList.remove("is-open");
+	document.body.style.overflow = "";
+	lastFocused?.focus();
+	state.selected = -1;
 }
 
 function stepDetail(dir: 1 | -1): void {
-  if (state.selected < 0 || state.order.length === 0) return;
-  const n = state.order.length;
-  state.selected = (state.selected + dir + n) % n;
-  renderDetail();
+	if (state.selected < 0 || state.order.length === 0) return;
+	const n = state.order.length;
+	state.selected = (state.selected + dir + n) % n;
+	renderDetail();
 }
 
 function renderDetail(): void {
-  if (!overlayEl) return;
-  const e = state.order[state.selected];
-  if (!e) return;
+	if (!overlayEl) return;
+	const e = state.order[state.selected];
+	if (!e) return;
 
-  const r = SIDE_RATIONALE[e.side];
-  const pos = `${state.selected + 1} / ${state.order.length}`;
+	const r = SIDE_RATIONALE[e.side];
+	const pos = `${state.selected + 1} / ${state.order.length}`;
 
-  const navLabel = $(".overlay__nav-label", overlayEl);
-  if (navLabel) navLabel.textContent = pos;
-  const prev = req$<HTMLButtonElement>(".icon-btn--prev", overlayEl);
-  const next = req$<HTMLButtonElement>(".icon-btn--next", overlayEl);
-  prev.disabled = state.order.length < 2;
-  next.disabled = state.order.length < 2;
+	const navLabel = $(".overlay__nav-label", overlayEl);
+	if (navLabel) navLabel.textContent = pos;
+	const prev = req$<HTMLButtonElement>(".icon-btn--prev", overlayEl);
+	const next = req$<HTMLButtonElement>(".icon-btn--next", overlayEl);
+	prev.disabled = state.order.length < 2;
+	next.disabled = state.order.length < 2;
 
-  const scroll = $(".overlay__scroll", overlayEl)!;
-  scroll.textContent = "";
+	const scroll = $(".overlay__scroll", overlayEl)!;
+	scroll.textContent = "";
 
-  // media
-  const media = el("div", "detail-media");
-  const img = el("img");
-  img.src = asset(e.image);
-  img.alt = `Animation preview of ${e.name}`;
-  img.width = 360;
-  img.height = 360;
-  img.decoding = "async";
-  media.appendChild(img);
+	// media
+	const media = el("div", "detail-media");
+	const img = el("img");
+	img.src = asset(e.image);
+	img.alt = `Animation preview of ${e.name}`;
+	img.width = 360;
+	img.height = 360;
+	img.decoding = "async";
+	media.appendChild(img);
 
-  // side-mode rationale card
-  const sideBox = el("div", "detail-side");
-  sideBox.dataset.side = e.side;
-  const sideTitle = el("div", "detail-side__title");
-  sideTitle.append(icon(e.side), textEl("span", "", r.title));
-  const ul = el("ul");
-  for (const p of r.points) {
-    const li = textEl("li", "", p);
-    ul.appendChild(li);
-  }
-  sideBox.append(sideTitle, ul);
+	// side-mode rationale card
+	const sideBox = el("div", "detail-side");
+	sideBox.dataset.side = e.side;
+	const sideTitle = el("div", "detail-side__title");
+	sideTitle.append(icon(e.side), textEl("span", "", r.title));
+	const ul = el("ul");
+	for (const p of r.points) {
+		const li = textEl("li", "", p);
+		ul.appendChild(li);
+	}
+	sideBox.append(sideTitle, ul);
 
-  const idLine = textEl(
-    "div",
-    "detail-id",
-    `Exercise #${e.id} · ${e.category}`,
-  );
-  const title = textEl("h2", "detail-title", e.name);
+	const idLine = textEl(
+		"div",
+		"detail-id",
+		`Exercise #${e.id} · ${e.category}`,
+	);
+	const title = textEl("h2", "detail-title", e.name);
 
-  const tags = el("div", "detail-tags");
-  tags.append(
-    chip(e.target, true),
-    chip(e.equipment),
-    chip(e.category),
-    chip(e.body_part),
-  );
+	const tags = el("div", "detail-tags");
+	tags.append(
+		chip(e.target, true),
+		chip(e.equipment),
+		chip(e.category),
+		chip(e.body_part),
+	);
 
-  const stepsBlock = el("div", "detail-block");
-  stepsBlock.appendChild(textEl("h3", "", "How to perform"));
-  if (e.steps.length > 0) {
-    const ol = el("ol", "steps");
-    for (const s of e.steps) ol.appendChild(textEl("li", "", s));
-    stepsBlock.appendChild(ol);
-  } else if (e.instructions) {
-    stepsBlock.appendChild(textEl("p", "detail-paragraph", e.instructions));
-  } else {
-    stepsBlock.appendChild(
-      textEl("p", "detail-paragraph detail-paragraph--muted", "No instructions available."),
-    );
-  }
+	const stepsBlock = el("div", "detail-block");
+	stepsBlock.appendChild(textEl("h3", "", "How to perform"));
+	if (e.steps.length > 0) {
+		const ol = el("ol", "steps");
+		for (const s of e.steps) ol.appendChild(textEl("li", "", s));
+		stepsBlock.appendChild(ol);
+	} else if (e.instructions) {
+		stepsBlock.appendChild(textEl("p", "detail-paragraph", e.instructions));
+	} else {
+		stepsBlock.appendChild(
+			textEl(
+				"p",
+				"detail-paragraph detail-paragraph--muted",
+				"No instructions available.",
+			),
+		);
+	}
 
-  const muscles = [e.muscle_group, ...e.secondary_muscles].filter(Boolean);
-  const muscleBlock = el("div", "detail-block");
-  if (muscles.length > 0) {
-    muscleBlock.appendChild(textEl("h3", "", "Involved muscles"));
-    const list = el("div", "muscle-list");
-    list.appendChild(chip(e.target, true));
-    for (const m of muscles) list.appendChild(chip(m));
-    muscleBlock.appendChild(list);
-  }
+	const muscles = [e.muscle_group, ...e.secondary_muscles].filter(Boolean);
+	const muscleBlock = el("div", "detail-block");
+	if (muscles.length > 0) {
+		muscleBlock.appendChild(textEl("h3", "", "Involved muscles"));
+		const list = el("div", "muscle-list");
+		list.appendChild(chip(e.target, true));
+		for (const m of muscles) list.appendChild(chip(m));
+		muscleBlock.appendChild(list);
+	}
 
-  const note = el("p", "attribution-note");
-  note.append(
-    document.createTextNode(
-      `Side-mode tag: ${SIDE_SHORT[e.side]} — ${r.tag}. Exercise data & animation © Gym Visual via the exercises-dataset project (`,
-    ),
-  );
-  const lic = el("a");
-  lic.href = asset("DATASET-LICENSE.txt");
-  lic.target = "_blank";
-  lic.rel = "noopener";
-  lic.textContent = "license";
-  const not = el("a");
-  not.href = asset("DATASET-NOTICE.md");
-  not.target = "_blank";
-  not.rel = "noopener";
-  not.textContent = "notice";
-  note.append(lic, document.createTextNode(" · "), not, document.createTextNode(")."));
+	const note = el("p", "attribution-note");
+	note.append(
+		document.createTextNode(
+			`Side-mode tag: ${SIDE_SHORT[e.side]} — ${r.tag}. Exercise data & animation © Gym Visual via the exercises-dataset project (`,
+		),
+	);
+	const lic = el("a");
+	lic.href = asset("DATASET-LICENSE.txt");
+	lic.target = "_blank";
+	lic.rel = "noopener";
+	lic.textContent = "license";
+	const not = el("a");
+	not.href = asset("DATASET-NOTICE.md");
+	not.target = "_blank";
+	not.rel = "noopener";
+	not.textContent = "notice";
+	note.append(
+		lic,
+		document.createTextNode(" · "),
+		not,
+		document.createTextNode(")."),
+	);
 
-  scroll.append(
-    media,
-    sideBox,
-    idLine,
-    title,
-    tags,
-    stepsBlock,
-    muscleBlock,
-    note,
-  );
+	scroll.append(
+		media,
+		sideBox,
+		idLine,
+		title,
+		tags,
+		stepsBlock,
+		muscleBlock,
+		note,
+	);
 
-  if (!prefersReducedMotion) {
-    const gifUrl = asset(e.gif_url);
-    const swap = () => {
-      img.src = gifUrl;
-      img.removeEventListener("mouseenter", swap);
-    };
-    img.addEventListener("mouseenter", swap);
-  }
-  scroll.scrollTop = 0;
+	if (!prefersReducedMotion) {
+		const gifUrl = asset(e.gif_url);
+		const swap = () => {
+			img.src = gifUrl;
+			img.removeEventListener("mouseenter", swap);
+		};
+		img.addEventListener("mouseenter", swap);
+	}
+	scroll.scrollTop = 0;
 }
 
 /* ---------- events ---------- */
 
 function onFilterChange(syncUrl = true): void {
-  applyFilters();
-  renderGrid(false);
-  if (syncUrl) writeParams();
+	applyFilters();
+	renderGrid(false);
+	if (syncUrl) writeParams();
 }
 
 function syncSideControls(): void {
-  for (const btn of rootEl!.querySelectorAll<HTMLButtonElement>(
-    ".seg__btn[data-side]",
-  )) {
-    btn.setAttribute(
-      "aria-pressed",
-      btn.dataset.side === state.side ? "true" : "false",
-    );
-  }
-  for (const card of rootEl!.querySelectorAll<HTMLElement>(".side-card")) {
-    card.classList.toggle("is-active", card.dataset.side === state.side);
-  }
+	for (const btn of rootEl!.querySelectorAll<HTMLButtonElement>(
+		".seg__btn[data-side]",
+	)) {
+		btn.setAttribute(
+			"aria-pressed",
+			btn.dataset.side === state.side ? "true" : "false",
+		);
+	}
+	for (const card of rootEl!.querySelectorAll<HTMLElement>(".side-card")) {
+		card.classList.toggle("is-active", card.dataset.side === state.side);
+	}
 }
 
 function syncControls(): void {
-  syncSideControls();
-  const search = req$<HTMLInputElement>(
-    ".filterbar input[type='search']",
-    rootEl!,
-  );
-  search.value = state.q;
-  req$<HTMLSelectElement>('select[data-kind="cat"]', rootEl!).value = state.cat;
-  req$<HTMLSelectElement>('select[data-kind="eq"]', rootEl!).value = state.eq;
-  req$<HTMLSelectElement>('select[data-kind="target"]', rootEl!).value =
-    state.target;
-  req$<HTMLSelectElement>('select[data-kind="sort"]', rootEl!).value =
-    state.sort;
+	syncSideControls();
+	const search = req$<HTMLInputElement>(
+		".filterbar input[type='search']",
+		rootEl!,
+	);
+	search.value = state.q;
+	req$<HTMLSelectElement>('select[data-kind="cat"]', rootEl!).value = state.cat;
+	req$<HTMLSelectElement>('select[data-kind="eq"]', rootEl!).value = state.eq;
+	req$<HTMLSelectElement>('select[data-kind="target"]', rootEl!).value =
+		state.target;
+	req$<HTMLSelectElement>('select[data-kind="sort"]', rootEl!).value =
+		state.sort;
 }
 
 function bindEvents(): void {
-  rootEl!.addEventListener("click", (ev) => {
-    const t = ev.target as HTMLElement;
-    const seg = t.closest<HTMLButtonElement>(".seg__btn[data-side]");
-    if (seg) {
-      state.side = seg.dataset.side as State["side"];
-      syncSideControls();
-      onFilterChange();
-      return;
-    }
-    const sideCard = t.closest<HTMLElement>(".side-card[data-side]");
-    if (sideCard) {
-      state.side = sideCard.dataset.side as State["side"];
-      syncSideControls();
-      onFilterChange();
-      sideCard.scrollIntoView({ block: "nearest" });
-      return;
-    }
-    if (t.closest(".btn-clear")) {
-      state.side = "all";
-      state.q = "";
-      state.cat = "";
-      state.eq = "";
-      state.target = "";
-      state.sort = "name";
-      syncControls();
-      onFilterChange();
-      return;
-    }
-    if (t.closest(".load-more")) {
-      state.visible += PAGE_SIZE;
-      renderGrid(true);
-    }
-  });
+	rootEl!.addEventListener("click", (ev) => {
+		const t = ev.target as HTMLElement;
+		const seg = t.closest<HTMLButtonElement>(".seg__btn[data-side]");
+		if (seg) {
+			state.side = seg.dataset.side as State["side"];
+			syncSideControls();
+			onFilterChange();
+			return;
+		}
+		const sideCard = t.closest<HTMLElement>(".side-card[data-side]");
+		if (sideCard) {
+			state.side = sideCard.dataset.side as State["side"];
+			syncSideControls();
+			onFilterChange();
+			sideCard.scrollIntoView({ block: "nearest" });
+			return;
+		}
+		if (t.closest(".btn-clear")) {
+			state.side = "all";
+			state.q = "";
+			state.cat = "";
+			state.eq = "";
+			state.target = "";
+			state.sort = "name";
+			syncControls();
+			onFilterChange();
+			return;
+		}
+		if (t.closest(".load-more")) {
+			state.visible += PAGE_SIZE;
+			renderGrid(true);
+		}
+	});
 
-  const search = req$<HTMLInputElement>(
-    ".filterbar input[type='search']",
-    rootEl!,
-  );
-  search.addEventListener("input", () => {
-    state.q = search.value;
-    onFilterChange();
-  });
+	const search = req$<HTMLInputElement>(
+		".filterbar input[type='search']",
+		rootEl!,
+	);
+	search.addEventListener("input", () => {
+		state.q = search.value;
+		onFilterChange();
+	});
 
-  for (const kind of ["cat", "eq", "target"] as const) {
-    const sel = req$<HTMLSelectElement>(
-      `select[data-kind="${kind}"]`,
-      rootEl!,
-    );
-    sel.addEventListener("change", () => {
-      (state as unknown as Record<string, string>)[kind] = sel.value;
-      onFilterChange();
-    });
-  }
+	for (const kind of ["cat", "eq", "target"] as const) {
+		const sel = req$<HTMLSelectElement>(`select[data-kind="${kind}"]`, rootEl!);
+		sel.addEventListener("change", () => {
+			(state as unknown as Record<string, string>)[kind] = sel.value;
+			onFilterChange();
+		});
+	}
 
-  const sortSel = req$<HTMLSelectElement>('select[data-kind="sort"]', rootEl!);
-  sortSel.addEventListener("change", () => {
-    state.sort = sortSel.value as State["sort"];
-    onFilterChange();
-  });
+	const sortSel = req$<HTMLSelectElement>('select[data-kind="sort"]', rootEl!);
+	sortSel.addEventListener("change", () => {
+		state.sort = sortSel.value as State["sort"];
+		onFilterChange();
+	});
 
-  $(".overlay__backdrop", rootEl!)?.addEventListener("click", closeDetail);
-  $(".icon-btn--close", rootEl!)?.addEventListener("click", closeDetail);
-  $(".icon-btn--prev", rootEl!)?.addEventListener("click", () =>
-    stepDetail(-1),
-  );
-  $(".icon-btn--next", rootEl!)?.addEventListener("click", () =>
-    stepDetail(1),
-  );
+	$(".overlay__backdrop", rootEl!)?.addEventListener("click", closeDetail);
+	$(".icon-btn--close", rootEl!)?.addEventListener("click", closeDetail);
+	$(".icon-btn--prev", rootEl!)?.addEventListener("click", () =>
+		stepDetail(-1),
+	);
+	$(".icon-btn--next", rootEl!)?.addEventListener("click", () => stepDetail(1));
 
-  document.addEventListener("keydown", (ev) => {
-    if (ev.key === "Escape" && overlayEl?.classList.contains("is-open")) {
-      closeDetail();
-      return;
-    }
-    const typing =
-      ev.target instanceof HTMLInputElement ||
-      ev.target instanceof HTMLSelectElement ||
-      ev.target instanceof HTMLTextAreaElement;
-    if (typing) return;
-    if (ev.key === "/") {
-      ev.preventDefault();
-      search.focus();
-    } else if (overlayEl?.classList.contains("is-open")) {
-      if (ev.key === "ArrowLeft") stepDetail(-1);
-      if (ev.key === "ArrowRight") stepDetail(1);
-    }
-  });
+	document.addEventListener("keydown", (ev) => {
+		if (ev.key === "Escape" && overlayEl?.classList.contains("is-open")) {
+			closeDetail();
+			return;
+		}
+		const typing =
+			ev.target instanceof HTMLInputElement ||
+			ev.target instanceof HTMLSelectElement ||
+			ev.target instanceof HTMLTextAreaElement;
+		if (typing) return;
+		if (ev.key === "/") {
+			ev.preventDefault();
+			search.focus();
+		} else if (overlayEl?.classList.contains("is-open")) {
+			if (ev.key === "ArrowLeft") stepDetail(-1);
+			if (ev.key === "ArrowRight") stepDetail(1);
+		}
+	});
 
-  window.addEventListener("popstate", () => {
-    readParams();
-    syncControls();
-    onFilterChange(false);
-  });
+	window.addEventListener("popstate", () => {
+		readParams();
+		syncControls();
+		onFilterChange(false);
+	});
 
-  observer = new IntersectionObserver(
-    (entries) => {
-      if (
-        entries.some((en) => en.isIntersecting) &&
-        state.visible < state.order.length
-      ) {
-        state.visible += PAGE_SIZE;
-        renderGrid(true);
-      }
-    },
-    { rootMargin: "600px" },
-  );
-  if (sentinelEl) observer.observe(sentinelEl);
+	observer = new IntersectionObserver(
+		(entries) => {
+			if (
+				entries.some((en) => en.isIntersecting) &&
+				state.visible < state.order.length
+			) {
+				state.visible += PAGE_SIZE;
+				renderGrid(true);
+			}
+		},
+		{ rootMargin: "600px" },
+	);
+	if (sentinelEl) observer.observe(sentinelEl);
 }
 
 /* ---------- boot ---------- */
 
 export async function init(root: HTMLElement): Promise<void> {
-  rootEl = root;
-  gridEl = $(".grid", root);
-  sentinelEl = $(".grid-sentinel", root);
-  overlayEl = $(".overlay", root);
-  loadMoreEl = $<HTMLButtonElement>(".load-more", root);
+	rootEl = root;
+	gridEl = $(".grid", root);
+	sentinelEl = $(".grid-sentinel", root);
+	overlayEl = $(".overlay", root);
+	loadMoreEl = $<HTMLButtonElement>(".load-more", root);
 
-  readParams();
+	readParams();
 
-  const res = await fetchAsset("data/exercises.json");
-  if (!res.ok) throw new Error(`failed to load exercises: ${res.status}`);
-  state.all = (await res.json()) as Exercise[];
+	const res = await fetchAsset("data/exercises.json");
+	if (!res.ok) throw new Error(`failed to load exercises: ${res.status}`);
+	state.all = (await res.json()) as Exercise[];
 
-  renderStats();
-  populateSelects();
-  syncControls();
-  bindEvents();
-  applyFilters();
-  renderGrid(false);
-  writeParams();
+	renderStats();
+	populateSelects();
+	syncControls();
+	bindEvents();
+	applyFilters();
+	renderGrid(false);
+	writeParams();
 }

@@ -29,7 +29,7 @@ names, equipment and movement patterns, with manual overrides. See the
   rationale, numbered instructions, target & involved muscles, and
   prev/next navigation (`←`/`→`, `Esc` to close, `/` to search).
 - Zero runtime dependencies, no framework JS — one small vanilla-TS bundle.
-- Dark, athletic design; respects `prefers-reduced-motion`.
+- Light, athletic design; respects `prefers-reduced-motion`.
 
 ## Local development
 
