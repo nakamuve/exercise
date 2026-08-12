@@ -138,6 +138,17 @@
   </div>
 
   <!-- ============ results ============ -->
+  <div class="viewbar" hidden>
+    <div class="seg" role="group" aria-label="What to display">
+      <button class="seg__btn" data-view="workout" aria-pressed="false">
+        Workout: <span class="viewbar__count">0</span>
+      </button>
+      <button class="seg__btn" data-view="all" aria-pressed="true">
+        All exercises
+      </button>
+    </div>
+    <span class="viewbar__hint">Your selection is saved in the URL.</span>
+  </div>
   <div class="grid" aria-label="Exercise results"></div>
   <div class="grid-sentinel" aria-hidden="true"></div>
   <button class="load-more" hidden>Load more</button>

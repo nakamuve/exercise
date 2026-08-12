@@ -1,4 +1,9 @@
-import { ROUTINE_CATEGORIES, ROUTINES, type Routine, type RoutineCategory } from "./routines";
+import {
+	ROUTINE_CATEGORIES,
+	ROUTINES,
+	type Routine,
+	type RoutineCategory,
+} from "./routines";
 
 /* ============================================================
    Exercise browser — all client interactivity.
@@ -90,6 +95,7 @@ interface State {
 	selected: number; // index into order
 	picked: Set<string>; // workout selection (exercise ids), shared via URL ?w=
 	activeCat: RoutineCategory; // routine category shown in the quick-routines strip
+	view: "workout" | "all"; // workout = grid shows the selection; all = full library
 }
 
 const state: State = {
@@ -105,6 +111,7 @@ const state: State = {
 	selected: -1,
 	picked: new Set<string>(),
 	activeCat: "full-body",
+	view: "all",
 };
 
 let rootEl: HTMLElement | null = null;
@@ -209,6 +216,8 @@ function readParams(): void {
 			if (t) state.picked.add(t);
 		}
 	}
+	// a shared workout link opens directly in workout view
+	state.view = state.picked.size > 0 ? "workout" : "all";
 }
 
 function writeParams(): void {
@@ -219,8 +228,9 @@ function writeParams(): void {
 	if (state.eq) p.set("eq", state.eq);
 	if (state.target) p.set("target", state.target);
 	if (state.sort !== "name") p.set("sort", state.sort);
-	// keep raw commas in ?w= (URLSearchParams would percent-encode them)
-	const w = [...state.picked].sort().join(",");
+	// keep raw commas in ?w= (URLSearchParams would percent-encode them);
+	// insertion order is preserved so routine order survives the round-trip
+	const w = [...state.picked].join(",");
 	let qs = p.toString();
 	if (w) qs = qs ? `${qs}&w=${w}` : `w=${w}`;
 	const qsOut = qs;
@@ -229,9 +239,21 @@ function writeParams(): void {
 
 /* ---------- filtering ---------- */
 
+/** The selected exercises, in workout order (Set insertion order). */
+function pickedExercises(): Exercise[] {
+	const out: Exercise[] = [];
+	for (const id of state.picked) {
+		const e = state.all.find((x) => x.id === id);
+		if (e) out.push(e);
+	}
+	return out;
+}
+
 function applyFilters(): void {
 	const q = state.q.trim().toLowerCase();
-	state.order = state.all.filter((e) => {
+	const source =
+		state.view === "workout" ? pickedExercises() : state.all;
+	state.order = source.filter((e) => {
 		if (state.side !== "all" && e.side !== state.side) return false;
 		if (state.cat && e.category !== state.cat) return false;
 		if (state.eq && e.equipment !== state.eq) return false;
@@ -249,11 +271,13 @@ function applyFilters(): void {
 		}
 		return true;
 	});
-	state.order.sort((a, b) =>
-		state.sort === "name-desc"
-			? b.name.localeCompare(a.name)
-			: a.name.localeCompare(b.name),
-	);
+	if (state.view !== "workout") {
+		state.order.sort((a, b) =>
+			state.sort === "name-desc"
+				? b.name.localeCompare(a.name)
+				: a.name.localeCompare(b.name),
+		);
+	}
 	state.visible = PAGE_SIZE;
 }
 
@@ -388,15 +412,32 @@ function updateCount(): void {
 	elm.textContent = "";
 	const total = state.order.length;
 	const shown = Math.min(state.visible, total);
-	const strong = el("strong");
-	strong.textContent = total.toLocaleString();
-	elm.appendChild(strong);
-	if (state.side !== "all") {
-		elm.append(document.createTextNode(` match · ${SIDE_LABEL[state.side]}`));
-	} else if (total !== state.all.length) {
-		elm.append(document.createTextNode(" match"));
+	if (state.view === "workout") {
+		const strong = el("strong");
+		strong.textContent = total.toLocaleString();
+		elm.appendChild(strong);
+		const unit = state.picked.size === 1 ? "workout exercise" : "workout exercises";
+		elm.append(
+			document.createTextNode(
+				total === state.picked.size
+					? ` ${unit}`
+					: ` of ${state.picked.size} ${unit}` +
+							(state.side !== "all" ? ` · ${SIDE_LABEL[state.side]}` : ""),
+			),
+		);
 	} else {
-		elm.append(document.createTextNode(" exercises"));
+		const strong = el("strong");
+		strong.textContent = total.toLocaleString();
+		elm.appendChild(strong);
+		if (state.side !== "all") {
+			elm.append(
+				document.createTextNode(` match · ${SIDE_LABEL[state.side]}`),
+			);
+		} else if (total !== state.all.length) {
+			elm.append(document.createTextNode(" match"));
+		} else {
+			elm.append(document.createTextNode(" exercises"));
+		}
 	}
 	if (shown < total) {
 		elm.append(document.createTextNode(` · showing ${shown}`));
@@ -471,9 +512,10 @@ function applyRoutine(r: Routine): void {
 		if (!state.all.some((e) => e.id === id)) state.picked.delete(id);
 	}
 	state.activeCat = r.category;
+	state.view = "workout"; // show the routine itself, not the whole library
 	updatePickedUI();
 	renderRoutines();
-	writeParams();
+	onFilterChange();
 }
 
 /** Render the quick-routines strip (category chips + this category's routines). */
@@ -490,10 +532,7 @@ function renderRoutines(): void {
 		b.type = "button";
 		b.dataset.cat = c.id;
 		b.textContent = c.label;
-		b.setAttribute(
-			"aria-pressed",
-			state.activeCat === c.id ? "true" : "false",
-		);
+		b.setAttribute("aria-pressed", state.activeCat === c.id ? "true" : "false");
 		catRow.appendChild(b);
 	}
 
@@ -521,14 +560,21 @@ function togglePick(id: string): void {
 	} else {
 		state.picked.add(id);
 	}
+	// an emptied workout view falls back to the full library
+	if (state.view === "workout" && state.picked.size === 0) {
+		state.view = "all";
+	}
 	updatePickedUI();
 	writeParams();
+	onFilterChange();
 }
 
 function clearPicked(): void {
 	state.picked.clear();
+	state.view = "all";
 	updatePickedUI();
 	writeParams();
+	onFilterChange();
 }
 
 /** Keep the tray, visible cards and overlay button in sync with the selection. */
@@ -577,9 +623,27 @@ function updatePickedUI(): void {
 	}
 
 	// routine chips: a routine is only "active" while the selection matches it exactly
-	for (const b of rootEl!.querySelectorAll<HTMLButtonElement>(".routines__var")) {
+	for (const b of rootEl!.querySelectorAll<HTMLButtonElement>(
+		".routines__var",
+	)) {
 		const r = ROUTINES.find((x) => x.id === b.dataset.routine);
 		b.setAttribute("aria-pressed", r && isRoutineActive(r) ? "true" : "false");
+	}
+
+	// view toggle (workout vs all exercises)
+	const viewbar = $(".viewbar", rootEl!);
+	if (viewbar) {
+		viewbar.hidden = state.picked.size === 0;
+		const count = $(".viewbar__count", viewbar);
+		if (count) count.textContent = String(state.picked.size);
+		for (const b of viewbar.querySelectorAll<HTMLButtonElement>(
+			".seg__btn[data-view]",
+		)) {
+			b.setAttribute(
+				"aria-pressed",
+				b.dataset.view === state.view ? "true" : "false",
+			);
+		}
 	}
 }
 
@@ -844,6 +908,13 @@ function syncControls(): void {
 function bindEvents(): void {
 	rootEl!.addEventListener("click", (ev) => {
 		const t = ev.target as HTMLElement;
+		const viewBtn = t.closest<HTMLButtonElement>(".viewbar .seg__btn[data-view]");
+		if (viewBtn && viewBtn.dataset.view) {
+			state.view = viewBtn.dataset.view as State["view"];
+			updatePickedUI();
+			onFilterChange();
+			return;
+		}
 		const catBtn = t.closest<HTMLButtonElement>(".routines__cat");
 		if (catBtn && catBtn.dataset.cat) {
 			state.activeCat = catBtn.dataset.cat as RoutineCategory;
