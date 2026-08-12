@@ -25,6 +25,13 @@ names, equipment and movement patterns, with manual overrides. See the
   query params (`?side=unilateral&q=lunge`).
 - **Card grid**: thumbnail with **hover → animation GIF** swap, side-mode
   badge, target + equipment chips; infinite scroll + "load more".
+- **Workout selection, shared via URL — no login**: tap the ＋ on any card
+  (or “Add to workout” in the detail panel) to build a multi-exercise
+  workout. The selection is encoded straight into the URL as
+  `?w=0001,0002,0043` and restored on load — purely client-side, so anyone
+  with the link sees the same workout instantly. No account, no server, no
+  auth surface; works unchanged on the static Pages deployment. The
+  floating tray offers *Copy share link* and *Clear*.
 - **Detail panel**: slide-over with the animation, the side-mode coaching
   rationale, numbered instructions, target & involved muscles, and
   prev/next navigation (`←`/`→`, `Esc` to close, `/` to search).
