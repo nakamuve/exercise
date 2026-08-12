@@ -97,6 +97,8 @@ wrangler.toml                    # Cloudflare Pages config
 
 ## Attribution
 
-Exercise data and media © [Gym Visual](https://gymvisual.com/) via the
-exercises-dataset project. See [`public/DATASET-LICENSE.txt`](public/DATASET-LICENSE.txt)
-and [`public/DATASET-NOTICE.md`](public/DATASET-NOTICE.md).
+Exercise data and media © [Gym Visual](https://gymvisual.com/), via the
+[exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset) repo
+(1,324 exercises, each with an animation GIF and thumbnail). See
+[`public/DATASET-LICENSE.txt`](public/DATASET-LICENSE.txt) and
+[`public/DATASET-NOTICE.md`](public/DATASET-NOTICE.md).

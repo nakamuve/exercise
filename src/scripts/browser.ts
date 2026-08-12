@@ -513,9 +513,14 @@ function renderDetail(): void {
 	const note = el("p", "attribution-note");
 	note.append(
 		document.createTextNode(
-			`Side-mode tag: ${SIDE_SHORT[e.side]} — ${r.tag}. Exercise data & animation © Gym Visual via the exercises-dataset project (`,
+			`Side-mode tag: ${SIDE_SHORT[e.side]} — ${r.tag}. Exercise data & animation © Gym Visual, via the `,
 		),
 	);
+	const repo = el("a");
+	repo.href = "https://github.com/hasaneyldrm/exercises-dataset";
+	repo.target = "_blank";
+	repo.rel = "noopener";
+	repo.textContent = "exercises-dataset";
 	const lic = el("a");
 	lic.href = asset("DATASET-LICENSE.txt");
 	lic.target = "_blank";
@@ -527,6 +532,8 @@ function renderDetail(): void {
 	not.rel = "noopener";
 	not.textContent = "notice";
 	note.append(
+		repo,
+		document.createTextNode(" repo · "),
 		lic,
 		document.createTextNode(" · "),
 		not,
