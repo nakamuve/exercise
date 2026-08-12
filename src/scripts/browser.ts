@@ -251,8 +251,7 @@ function pickedExercises(): Exercise[] {
 
 function applyFilters(): void {
 	const q = state.q.trim().toLowerCase();
-	const source =
-		state.view === "workout" ? pickedExercises() : state.all;
+	const source = state.view === "workout" ? pickedExercises() : state.all;
 	state.order = source.filter((e) => {
 		if (state.side !== "all" && e.side !== state.side) return false;
 		if (state.cat && e.category !== state.cat) return false;
@@ -416,7 +415,8 @@ function updateCount(): void {
 		const strong = el("strong");
 		strong.textContent = total.toLocaleString();
 		elm.appendChild(strong);
-		const unit = state.picked.size === 1 ? "workout exercise" : "workout exercises";
+		const unit =
+			state.picked.size === 1 ? "workout exercise" : "workout exercises";
 		elm.append(
 			document.createTextNode(
 				total === state.picked.size
@@ -430,9 +430,7 @@ function updateCount(): void {
 		strong.textContent = total.toLocaleString();
 		elm.appendChild(strong);
 		if (state.side !== "all") {
-			elm.append(
-				document.createTextNode(` match · ${SIDE_LABEL[state.side]}`),
-			);
+			elm.append(document.createTextNode(` match · ${SIDE_LABEL[state.side]}`));
 		} else if (total !== state.all.length) {
 			elm.append(document.createTextNode(" match"));
 		} else {
@@ -908,7 +906,9 @@ function syncControls(): void {
 function bindEvents(): void {
 	rootEl!.addEventListener("click", (ev) => {
 		const t = ev.target as HTMLElement;
-		const viewBtn = t.closest<HTMLButtonElement>(".viewbar .seg__btn[data-view]");
+		const viewBtn = t.closest<HTMLButtonElement>(
+			".viewbar .seg__btn[data-view]",
+		);
 		if (viewBtn && viewBtn.dataset.view) {
 			state.view = viewBtn.dataset.view as State["view"];
 			updatePickedUI();
