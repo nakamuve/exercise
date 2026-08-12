@@ -130,6 +130,14 @@
   <div class="grid-sentinel" aria-hidden="true"></div>
   <button class="load-more" hidden>Load more</button>
 
+  <!-- ============ workout share tray (no login, state lives in the URL) ============ -->
+  <div class="workout-tray" hidden role="status" aria-live="polite">
+    <span class="workout-tray__count"><strong>0</strong> selected</span>
+    <span class="workout-tray__hint">Saved in the URL — share the link, no login needed.</span>
+    <button class="workout-tray__share" type="button">Copy share link</button>
+    <button class="workout-tray__clear" type="button">Clear</button>
+  </div>
+
   <!-- ============ detail overlay ============ -->
   <div class="overlay" role="dialog" aria-modal="true" aria-label="Exercise details">
     <div class="overlay__backdrop"></div>
@@ -137,6 +145,9 @@
       <div class="overlay__head">
         <span class="overlay__nav-label section-label mono">0 / 0</span>
         <span class="spacer"></span>
+        <button class="overlay__pick" type="button" aria-pressed="false" aria-label="Add current exercise to workout">
+          <span class="overlay__pick-label">＋ Add to workout</span>
+        </button>
         <button class="icon-btn icon-btn--prev" aria-label="Previous exercise">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
         </button>
@@ -193,6 +204,34 @@
   }
   .detail-paragraph--muted {
     color: var(--text-faint);
+  }
+  .overlay__pick {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg-elev2);
+    color: var(--text-dim);
+    font-size: 12.5px;
+    font-weight: 650;
+    white-space: nowrap;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .overlay__pick:hover {
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
+  .overlay__pick[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .overlay__pick-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
   }
 </style>
 

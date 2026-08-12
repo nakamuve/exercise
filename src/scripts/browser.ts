@@ -76,16 +76,17 @@ const PAGE_SIZE = 60;
 const ALLOWED_FETCH = new Set(["data/exercises.json"]);
 
 interface State {
-	side: SideType | "all";
-	q: string;
-	cat: string; // "" = all
-	eq: string; // "" = all
-	target: string; // "" = all
-	sort: "name" | "name-desc";
-	visible: number;
-	order: Exercise[]; // filtered + sorted
-	all: Exercise[];
-	selected: number; // index into order
+side: SideType | "all";
+q: string;
+cat: string; // "" = all
+eq: string; // "" = all
+target: string; // "" = all
+sort: "name" | "name-desc";
+visible: number;
+order: Exercise[]; // filtered + sorted
+all: Exercise[];
+selected: number; // index into order
+picked: Set<string>; // workout selection (exercise ids), shared via URL ?w=
 }
 
 const state: State = {
@@ -99,6 +100,7 @@ const state: State = {
 	order: [],
 	all: [],
 	selected: -1,
+	picked: new Set<string>(),
 };
 
 let rootEl: HTMLElement | null = null;
@@ -193,6 +195,16 @@ function readParams(): void {
 	state.eq = p.get("eq") ?? "";
 	state.target = p.get("target") ?? "";
 	if (p.get("sort") === "name-desc") state.sort = "name-desc";
+
+	// workout selection: comma-separated exercise ids, e.g. ?w=0001,0032,0043
+	state.picked.clear();
+	const w = p.get("w");
+	if (w) {
+		for (const id of w.split(",")) {
+			const t = id.trim();
+			if (t) state.picked.add(t);
+		}
+	}
 }
 
 function writeParams(): void {
@@ -203,8 +215,12 @@ function writeParams(): void {
 	if (state.eq) p.set("eq", state.eq);
 	if (state.target) p.set("target", state.target);
 	if (state.sort !== "name") p.set("sort", state.sort);
-	const qs = p.toString();
-	history.replaceState(null, "", qs ? `?${qs}` : location.pathname);
+	// keep raw commas in ?w= (URLSearchParams would percent-encode them)
+	const w = [...state.picked].sort().join(",");
+	let qs = p.toString();
+	if (w) qs = qs ? `${qs}&w=${w}` : `w=${w}`;
+	const qsOut = qs;
+	history.replaceState(null, "", qsOut ? `?${qsOut}` : location.pathname);
 }
 
 /* ---------- filtering ---------- */
@@ -289,6 +305,31 @@ function buildCard(e: Exercise): HTMLButtonElement {
 	return card;
 }
 
+/** Grid cell: the card plus a workout pick toggle (siblings, not nested). */
+function buildCell(e: Exercise): HTMLDivElement {
+	const cell = el("div", "cell");
+	const card = buildCard(e);
+	if (state.picked.has(e.id)) card.classList.add("is-picked");
+
+	const pickBtn = el("button", "card__pick") as HTMLButtonElement;
+	pickBtn.type = "button";
+	pickBtn.dataset.id = e.id;
+	const picked = state.picked.has(e.id);
+	pickBtn.setAttribute("aria-pressed", picked ? "true" : "false");
+	pickBtn.setAttribute(
+		"aria-label",
+		picked ? `Remove ${e.name} from workout` : `Add ${e.name} to workout`,
+	);
+	pickBtn.textContent = picked ? "✓" : "＋";
+	pickBtn.addEventListener("click", (ev) => {
+		ev.stopPropagation();
+		togglePick(e.id);
+	});
+
+	cell.append(card, pickBtn);
+	return cell;
+}
+
 function renderGrid(append = false): void {
 	if (!gridEl) return;
 	const slice = state.order.slice(0, state.visible);
@@ -325,7 +366,7 @@ function renderGrid(append = false): void {
 	}
 
 	const frag = document.createDocumentFragment();
-	for (const e of slice) frag.appendChild(buildCard(e));
+	for (const e of slice) frag.appendChild(buildCell(e));
 	gridEl.appendChild(frag);
 	updateCount();
 	updateLoadMore();
@@ -395,6 +436,119 @@ function populateSelects(): void {
 	fill(req$<HTMLSelectElement>('select[data-kind="cat"]', rootEl!), cats);
 	fill(req$<HTMLSelectElement>('select[data-kind="eq"]', rootEl!), eqs);
 	fill(req$<HTMLSelectElement>('select[data-kind="target"]', rootEl!), targets);
+}
+
+/* ---------- workout selection (shared via URL ?w=) ---------- */
+
+function togglePick(id: string): void {
+	if (state.picked.has(id)) {
+		state.picked.delete(id);
+	} else {
+		state.picked.add(id);
+	}
+	updatePickedUI();
+	writeParams();
+}
+
+function clearPicked(): void {
+	state.picked.clear();
+	updatePickedUI();
+	writeParams();
+}
+
+/** Keep the tray, visible cards and overlay button in sync with the selection. */
+function updatePickedUI(): void {
+	const tray = $(".workout-tray", rootEl!);
+	if (tray) {
+		const n = state.picked.size;
+		tray.hidden = n === 0;
+		document.body.classList.toggle("workout-active", n > 0);
+		const countEl = $(".workout-tray__count strong", tray);
+		if (countEl) countEl.textContent = String(n);
+		const shareBtn = $<HTMLButtonElement>(".workout-tray__share", tray);
+		if (shareBtn && shareBtn.textContent !== "Copied ✓") {
+			shareBtn.textContent = n > 0 ? "Copy share link" : "Copy share link";
+		}
+	}
+
+	for (const cell of rootEl!.querySelectorAll<HTMLElement>(".cell")) {
+		const card = $<HTMLButtonElement>(".card", cell);
+		if (!card) continue;
+		const id = card.dataset.id ?? "";
+		const picked = state.picked.has(id);
+		card.classList.toggle("is-picked", picked);
+		const btn = $<HTMLButtonElement>(".card__pick", cell);
+		if (btn) {
+			btn.setAttribute("aria-pressed", picked ? "true" : "false");
+			btn.textContent = picked ? "✓" : "＋";
+			btn.setAttribute(
+				"aria-label",
+				picked ? `Remove ${id} from workout` : `Add ${id} to workout`,
+			);
+		}
+	}
+
+	const ov = $<HTMLButtonElement>(".overlay__pick", rootEl!);
+	if (ov && state.selected >= 0 && state.order[state.selected]) {
+		const picked = state.picked.has(state.order[state.selected].id);
+		ov.setAttribute("aria-pressed", picked ? "true" : "false");
+		ov.classList.toggle("is-picked", picked);
+		const label = $(".overlay__pick-label", ov);
+		if (label) label.textContent = picked ? "In workout ✓" : "＋ Add to workout";
+	}
+}
+
+function legacyCopy(text: string): boolean {
+	const ta = document.createElement("textarea");
+	ta.value = text;
+	ta.style.position = "fixed";
+	ta.style.opacity = "0";
+	ta.style.pointerEvents = "none";
+	document.body.appendChild(ta);
+	ta.select();
+	let ok = false;
+	try {
+		// execCommand is deprecated but remains the only last-resort copy path
+		// outside the async Clipboard API; access it without the typed signature.
+		const execCopy = (document as unknown as {
+			execCommand(cmd: string): boolean;
+		}).execCommand;
+		ok = execCopy.call(document, "copy");
+	} catch {
+		ok = false;
+	}
+	ta.remove();
+	return ok;
+}
+
+function shareWorkout(): void {
+	const btn = $<HTMLButtonElement>(".workout-tray__share", rootEl!);
+	// writeParams keeps location.href in sync, so the current URL is the share link
+	const url = location.href;
+	const done = () => {
+		if (!btn) return;
+		btn.textContent = "Copied ✓";
+		window.setTimeout(() => {
+			btn.textContent = "Copy share link";
+		}, 1600);
+	};
+	const fail = () => {
+		if (!btn) return;
+		btn.textContent = "Copy from address bar";
+		window.setTimeout(() => {
+			btn.textContent = "Copy share link";
+		}, 4000);
+	};
+	if (navigator.clipboard?.writeText) {
+		navigator.clipboard.writeText(url).then(done, () => {
+			if (legacyCopy(url)) done();
+			else fail();
+		});
+	} else if (legacyCopy(url)) {
+		done();
+	} else {
+		fail();
+	}
 }
 
 /* ---------- detail overlay ---------- */
@@ -560,6 +714,7 @@ function renderDetail(): void {
 		img.addEventListener("mouseenter", swap);
 	}
 	scroll.scrollTop = 0;
+	updatePickedUI(); // keep the "add to workout" button in sync
 }
 
 /* ---------- events ---------- */
@@ -663,6 +818,13 @@ function bindEvents(): void {
 		stepDetail(-1),
 	);
 	$(".icon-btn--next", rootEl!)?.addEventListener("click", () => stepDetail(1));
+	$(".overlay__pick", rootEl!)?.addEventListener("click", () => {
+		if (state.selected >= 0 && state.order[state.selected]) {
+			togglePick(state.order[state.selected].id);
+		}
+	});
+	$(".workout-tray__share", rootEl!)?.addEventListener("click", shareWorkout);
+	$(".workout-tray__clear", rootEl!)?.addEventListener("click", clearPicked);
 
 	document.addEventListener("keydown", (ev) => {
 		if (ev.key === "Escape" && overlayEl?.classList.contains("is-open")) {
@@ -719,11 +881,17 @@ export async function init(root: HTMLElement): Promise<void> {
 	if (!res.ok) throw new Error(`failed to load exercises: ${res.status}`);
 	state.all = (await res.json()) as Exercise[];
 
+	// drop any ?w= ids that do not exist in the dataset
+	for (const id of [...state.picked]) {
+		if (!state.all.some((e) => e.id === id)) state.picked.delete(id);
+	}
+
 	renderStats();
 	populateSelects();
 	syncControls();
 	bindEvents();
 	applyFilters();
 	renderGrid(false);
+	updatePickedUI();
 	writeParams();
 }
