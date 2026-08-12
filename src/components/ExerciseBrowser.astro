@@ -1,0 +1,227 @@
+---
+/**
+ * Interactive exercise browser island.
+ * Static shell + hydrated by src/scripts/browser.ts (see <script> below).
+ */
+---
+
+<div id="browser" data-browser>
+  <!-- ============ hero + side-mode explainer ============ -->
+  <section class="hero">
+    <p class="hero__kicker">Side-mode training library</p>
+    <h1 class="hero__title">
+      Load <span class="hl">both sides</span> to go heavy.<br />Train
+      <span class="hl">one side</span> to balance out.
+    </h1>
+    <p class="hero__lede">
+      Every exercise below is tagged by how it is performed — one side at a
+      time (unilateral), both sides together (bilateral), or either way. Pick a
+      side-mode to focus eccentric overload and balance work, or to train at
+      your biggest load. Click any card for the full breakdown.
+    </p>
+    <p class="stats-line section-label" role="status" aria-live="polite"></p>
+
+    <div class="side-cards">
+      <button class="side-card" data-side="unilateral" aria-label="Filter to exercises done each side">
+        <span class="side-card__top">
+          <span class="side-card__icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><path d="M12 5c-2.5 2-4 4.5-4 7s1.5 5 4 7"/><path d="M12 5c2.5 2 4 4.5 4 7s-1.5 5-4 7"/></svg>
+          </span>
+          <span class="side-card__title">Each side</span>
+        </span>
+        <p>
+          <strong>One side at a time.</strong> Lower load per side lets you slow
+          the lowering (eccentric) phase and control it better — the classic
+          way to add <strong>eccentric overload</strong>. Train both sides in
+          <strong>balance</strong>: same sets × reps left and right.
+        </p>
+        <span class="side-card__tag">eccentric overload · balance required</span>
+      </button>
+
+      <button class="side-card" data-side="bilateral" aria-label="Filter to exercises done both sides together">
+        <span class="side-card__top">
+          <span class="side-card__icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 7v10M16 7v10"/><path d="M4 9v6M20 9v6"/><path d="M8 12h8"/></svg>
+          </span>
+          <span class="side-card__title">Both sides</span>
+        </span>
+        <p>
+          <strong>Both sides together.</strong> Both limbs share the bar, so the
+          total load can be <strong>heaviest</strong> — the most efficient way
+          to build maximal strength. A strong side can help carry a weaker one,
+          so keep an eye on asymmetries over time.
+        </p>
+        <span class="side-card__tag">biggest load · max strength</span>
+      </button>
+
+      <button class="side-card" data-side="either" aria-label="Filter to exercises that can be done either way">
+        <span class="side-card__top">
+          <span class="side-card__icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9a5 5 0 0 1 0 10H4"/><path d="M4 9 1.5 7 4 5"/><path d="M20 17h-9a5 5 0 0 1 0-10h9"/><path d="M20 15l2.5 2L20 19"/></svg>
+          </span>
+          <span class="side-card__title">Either way</span>
+        </span>
+        <p>
+          <strong>Same movement, your choice.</strong> Works one side at a time
+          or both together. Go <strong>each side</strong> for eccentric
+          overload and balance work; go <strong>both sides</strong> when you
+          want the biggest load for the movement.
+        </p>
+        <span class="side-card__tag">pick the goal</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ filter bar ============ -->
+  <div class="filterbar">
+    <div class="filterbar__row">
+      <div class="seg" role="group" aria-label="Filter by how the exercise is performed">
+        <button class="seg__btn" data-side="all" aria-pressed="true">All</button>
+        <button class="seg__btn" data-side="unilateral" aria-pressed="false">
+          <span class="seg__dot"></span>Each side
+        </button>
+        <button class="seg__btn" data-side="bilateral" aria-pressed="false">
+          <span class="seg__dot"></span>Both sides
+        </button>
+        <button class="seg__btn" data-side="either" aria-pressed="false">
+          <span class="seg__dot"></span>Either way
+        </button>
+      </div>
+      <span class="spacer"></span>
+      <span class="result-count" role="status" aria-live="polite"></span>
+    </div>
+
+    <div class="filterbar__row" style="margin-top: 10px">
+      <div class="select-wrap" style="flex: 1; min-width: 200px; max-width: 360px">
+        <input
+          type="search"
+          placeholder="Search exercises, muscles, equipment…"
+          aria-label="Search exercises"
+          autocomplete="off"
+          spellcheck="false"
+          style="
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 9px;
+            border: 1px solid var(--line-strong);
+            background: var(--bg-elev);
+            color: var(--text);
+            font-size: 13px;
+          "
+        />
+      </div>
+      <div class="select-wrap">
+        <select data-kind="cat" data-placeholder="Category: all" aria-label="Filter by category">
+          <option value="">Category: all</option>
+        </select>
+      </div>
+      <div class="select-wrap">
+        <select data-kind="eq" data-placeholder="Equipment: all" aria-label="Filter by equipment">
+          <option value="">Equipment: all</option>
+        </select>
+      </div>
+      <div class="select-wrap">
+        <select data-kind="target" data-placeholder="Target muscle: all" aria-label="Filter by target muscle">
+          <option value="">Target muscle: all</option>
+        </select>
+      </div>
+      <div class="select-wrap">
+        <select data-kind="sort" aria-label="Sort order">
+          <option value="name">Name A→Z</option>
+          <option value="name-desc">Name Z→A</option>
+        </select>
+      </div>
+      <button class="btn-clear">Reset</button>
+    </div>
+  </div>
+
+  <!-- ============ results ============ -->
+  <div class="grid" aria-label="Exercise results"></div>
+  <div class="grid-sentinel" aria-hidden="true"></div>
+  <button class="load-more" hidden>Load more</button>
+
+  <!-- ============ detail overlay ============ -->
+  <div class="overlay" role="dialog" aria-modal="true" aria-label="Exercise details">
+    <div class="overlay__backdrop"></div>
+    <div class="overlay__panel">
+      <div class="overlay__head">
+        <span class="overlay__nav-label section-label mono">0 / 0</span>
+        <span class="spacer"></span>
+        <button class="icon-btn icon-btn--prev" aria-label="Previous exercise">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <button class="icon-btn icon-btn--next" aria-label="Next exercise">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+        <button class="icon-btn icon-btn--close" aria-label="Close details">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="overlay__scroll"></div>
+    </div>
+  </div>
+
+  <!-- ============ static icon templates (cloned by the client) ============ -->
+  <template id="icon-unilateral">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><path d="M12 5c-2.5 2-4 4.5-4 7s1.5 5 4 7"/><path d="M12 5c2.5 2 4 4.5 4 7s-1.5 5-4 7"/></svg>
+  </template>
+  <template id="icon-bilateral">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 7v10M16 7v10"/><path d="M4 9v6M20 9v6"/><path d="M8 12h8"/></svg>
+  </template>
+  <template id="icon-either">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9a5 5 0 0 1 0 10H4"/><path d="M4 9 1.5 7 4 5"/><path d="M20 17h-9a5 5 0 0 1 0-10h9"/><path d="M20 15l2.5 2L20 19"/></svg>
+  </template>
+</div>
+
+<style>
+  .stats-line strong {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .stats-line .stats-uni {
+    color: var(--uni);
+  }
+  .stats-line .stats-bi {
+    color: var(--bi);
+  }
+  .stats-line .stats-ei {
+    color: var(--either);
+  }
+  .filterbar input[type="search"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .filterbar input[type="search"]::placeholder {
+    color: var(--text-faint);
+  }
+  .detail-paragraph {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .detail-paragraph--muted {
+    color: var(--text-faint);
+  }
+</style>
+
+<script>
+  import { init } from "../scripts/browser";
+  const root = document.getElementById("browser");
+  if (root) {
+    void init(root).catch((err) => {
+      console.error("Exercise browser failed to start:", err);
+      const grid = root.querySelector(".grid");
+      if (grid) {
+        grid.textContent = "";
+        const p = document.createElement("p");
+        p.textContent =
+          "Could not load the exercise data. Please refresh the page.";
+        p.style.cssText =
+          "grid-column:1/-1;text-align:center;color:var(--text-faint);padding:60px 0";
+        grid.appendChild(p);
+      }
+    });
+  }
+</script>

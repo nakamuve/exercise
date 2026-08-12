@@ -9,9 +9,18 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check",
+    "classify": "python3 scripts/classify.py",
+    "copy-media": "./scripts/copy_media.sh",
+    "predeploy": "npm run build",
+    "deploy": "npx wrangler pages deploy dist"
   },
   "dependencies": {
     "astro": "^7.2.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^6.0.3"
   }
 }

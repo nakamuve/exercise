@@ -1,0 +1,18 @@
+# Cloudflare Pages headers
+# Media is immutable per deploy (files change only on redeploy).
+/images/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/videos/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The dataset bundle is re-validated on each deploy.
+/data/exercises.json
+  Cache-Control: public, max-age=3600
+
+# HTML: short revalidation so new deploys are picked up quickly.
+/*
+  Cache-Control: public, max-age=300

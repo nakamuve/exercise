@@ -1,0 +1,7 @@
+# Cloudflare Pages configuration (Wrangler).
+# Use `wrangler pages deploy dist` or connect this repo in the Pages dashboard:
+#   Build command: npm run build
+#   Output directory: dist
+name = "nakamuve-strength"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "dist"

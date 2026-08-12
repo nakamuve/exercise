@@ -1,17 +1,95 @@
 ---
+import "../styles/site.css";
+import ExerciseBrowser from "../components/ExerciseBrowser.astro";
 
+const title = "Nakamuve Strength — Exercise Library";
+const description =
+  "1,324 exercises tagged by side-mode: each side (unilateral), both sides (bilateral) or either way. Filter, search and get the coaching breakdown for eccentric overload and balanced training.";
 ---
 
+<!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={Astro.site ? new URL(Astro.url.pathname, Astro.site).href : Astro.url.href} />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="/" aria-label="Nakamuve Strength home">
+          <span class="brand__mark" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 7v10M16 7v10"/><path d="M4 9v6M20 9v6"/><path d="M8 12h8"/></svg>
+          </span>
+          <span>
+            <span class="brand__name">Nakamuve <em>Strength</em></span>
+            <span class="brand__sub">Exercise library</span>
+          </span>
+        </a>
+        <span class="section-label mono" style="color: var(--text-faint)">
+          each side <span style="color: var(--uni)">●</span> ·
+          both sides <span style="color: var(--bi)">●</span> ·
+          either <span style="color: var(--either)">●</span>
+        </span>
+      </div>
+    </header>
+
+    <div class="container">
+      <ExerciseBrowser />
+
+      <details class="method">
+        <summary>How the side-mode tag is determined</summary>
+        <div class="method__body">
+          <p>
+            Each of the 1,324 exercises was classified automatically from its
+            name, equipment and movement pattern, with manual overrides where
+            the rules were ambiguous:
+          </p>
+          <ul>
+            <li>
+              <code>each side</code> — inherently one side at a time or
+              alternating: lunges, split squats, one-arm rows, single-leg
+              deadlifts, carries, boxing, battle ropes…
+            </li>
+            <li>
+              <code>both sides</code> — inherently performed with both sides
+              together: barbell &amp; machine compounds, push-ups, pull-ups,
+              sit-ups, jumps, bikes, sleds…
+            </li>
+            <li>
+              <code>either way</code> — the same movement works one side at a
+              time or both together: most dumbbell, kettlebell, band and cable
+              work (curls, presses, raises, rows…), plus stretching and
+              mobility.
+            </li>
+          </ul>
+          <p>
+            The tag describes the <em>usual</em> way the movement is performed.
+            For <code>either way</code> exercises, pick the variant that serves
+            your goal: one side at a time for eccentric overload and balance
+            work, both sides together for the heaviest load.
+          </p>
+        </div>
+      </details>
+    </div>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <span>
+          Exercise data &amp; media © Gym Visual via the
+          <a href="/DATASET-LICENSE.txt" target="_blank" rel="noopener">exercises-dataset</a>
+          project · <a href="/DATASET-NOTICE.md" target="_blank" rel="noopener">media notice</a>
+        </span>
+        <span>1,324 exercises · 255 each-side · 633 both-sides · 436 either-way</span>
+        <span style="margin-left: auto">Press <kbd>/</kbd> to search</span>
+      </div>
+    </footer>
+  </body>
 </html>
