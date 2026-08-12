@@ -107,10 +107,14 @@ src/
 wrangler.toml                    # Cloudflare Pages config
 ```
 
-## Attribution
+## License & Attribution
+
+This project's code is MIT licensed (see [`LICENSE`](LICENSE)), which also
+carries the exercises-dataset terms for the derived data and the Gym Visual
+media exception.
 
 Exercise data and media © [Gym Visual](https://gymvisual.com/), via the
 [exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset) repo
 (1,324 exercises, each with an animation GIF and thumbnail). See
-[`public/DATASET-LICENSE.txt`](public/DATASET-LICENSE.txt) and
-[`public/DATASET-NOTICE.md`](public/DATASET-NOTICE.md).
+[`LICENSE`](LICENSE), [`public/DATASET-LICENSE.txt`](public/DATASET-LICENSE.txt)
+and [`public/DATASET-NOTICE.md`](public/DATASET-NOTICE.md).
