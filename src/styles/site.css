@@ -336,6 +336,101 @@ kbd {
 	color: var(--sc, var(--accent));
 }
 
+/* ---------- quick routines ---------- */
+
+.routines {
+	margin-top: 26px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--bg-elev);
+	padding: 14px 16px 16px;
+}
+.routines__head {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin-bottom: 11px;
+}
+.routines__note {
+	color: var(--text-faint);
+	font-size: 12px;
+}
+.routines__cats {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+.routines__cat {
+	padding: 6px 13px;
+	border-radius: 999px;
+	border: 1px solid var(--line-strong);
+	background: var(--bg-elev2);
+	font-size: 12.5px;
+	font-weight: 650;
+	color: var(--text-dim);
+	transition:
+		color 0.15s ease,
+		background 0.15s ease,
+		border-color 0.15s ease;
+}
+.routines__cat:hover {
+	color: var(--text);
+	border-color: var(--line-strong);
+}
+.routines__cat[aria-pressed="true"] {
+	background: var(--text);
+	color: var(--bg);
+}
+.routines__vars {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+	margin-top: 9px;
+}
+.routines__var {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 12px;
+	border-radius: 999px;
+	border: 1px dashed var(--line-strong);
+	background: transparent;
+	font-size: 12.5px;
+	color: var(--text-dim);
+	transition:
+		color 0.15s ease,
+		border-color 0.15s ease,
+		background 0.15s ease;
+}
+.routines__var:hover {
+	color: var(--text);
+	border-style: solid;
+}
+.routines__var[aria-pressed="true"] {
+	background: var(--accent);
+	border-color: var(--accent);
+	border-style: solid;
+	color: var(--accent-ink);
+}
+.routines__var-code {
+	font-family: var(--mono);
+	font-size: 10.5px;
+	opacity: 0.75;
+}
+.routines__var-count {
+	font-family: var(--mono);
+	font-size: 10.5px;
+	background: var(--bg-elev2);
+	border-radius: 999px;
+	padding: 1px 7px;
+	color: var(--text-faint);
+}
+.routines__var[aria-pressed="true"] .routines__var-count {
+	background: rgba(255, 255, 255, 0.25);
+	color: inherit;
+}
+
 /* ---------- filter bar ---------- */
 
 .filterbar {

@@ -1,3 +1,5 @@
+import { ROUTINE_CATEGORIES, ROUTINES, type Routine, type RoutineCategory } from "./routines";
+
 /* ============================================================
    Exercise browser — all client interactivity.
    Vanilla TS, no framework. Hydrates the island in
@@ -76,17 +78,18 @@ const PAGE_SIZE = 60;
 const ALLOWED_FETCH = new Set(["data/exercises.json"]);
 
 interface State {
-side: SideType | "all";
-q: string;
-cat: string; // "" = all
-eq: string; // "" = all
-target: string; // "" = all
-sort: "name" | "name-desc";
-visible: number;
-order: Exercise[]; // filtered + sorted
-all: Exercise[];
-selected: number; // index into order
-picked: Set<string>; // workout selection (exercise ids), shared via URL ?w=
+	side: SideType | "all";
+	q: string;
+	cat: string; // "" = all
+	eq: string; // "" = all
+	target: string; // "" = all
+	sort: "name" | "name-desc";
+	visible: number;
+	order: Exercise[]; // filtered + sorted
+	all: Exercise[];
+	selected: number; // index into order
+	picked: Set<string>; // workout selection (exercise ids), shared via URL ?w=
+	activeCat: RoutineCategory; // routine category shown in the quick-routines strip
 }
 
 const state: State = {
@@ -101,6 +104,7 @@ const state: State = {
 	all: [],
 	selected: -1,
 	picked: new Set<string>(),
+	activeCat: "full-body",
 };
 
 let rootEl: HTMLElement | null = null;
@@ -440,6 +444,77 @@ function populateSelects(): void {
 
 /* ---------- workout selection (shared via URL ?w=) ---------- */
 
+function isRoutineActive(r: Routine): boolean {
+	return (
+		r.ids.length === state.picked.size &&
+		r.ids.every((id) => state.picked.has(id))
+	);
+}
+
+function currentRoutine(): Routine | null {
+	if (state.picked.size === 0) return null;
+	for (const r of ROUTINES) {
+		if (isRoutineActive(r)) return r;
+	}
+	return null;
+}
+
+function categoryLabel(cat: RoutineCategory): string {
+	return ROUTINE_CATEGORIES.find((c) => c.id === cat)?.label ?? cat;
+}
+
+function applyRoutine(r: Routine): void {
+	state.picked.clear();
+	for (const id of r.ids) state.picked.add(id);
+	// safety net: drop any id that is not in the loaded dataset
+	for (const id of [...state.picked]) {
+		if (!state.all.some((e) => e.id === id)) state.picked.delete(id);
+	}
+	state.activeCat = r.category;
+	updatePickedUI();
+	renderRoutines();
+	writeParams();
+}
+
+/** Render the quick-routines strip (category chips + this category's routines). */
+function renderRoutines(): void {
+	const wrap = $(".routines", rootEl!);
+	if (!wrap) return;
+	const catRow = $(".routines__cats", wrap);
+	const varRow = $(".routines__vars", wrap);
+	if (!catRow || !varRow) return;
+
+	catRow.textContent = "";
+	for (const c of ROUTINE_CATEGORIES) {
+		const b = el("button", "routines__cat") as HTMLButtonElement;
+		b.type = "button";
+		b.dataset.cat = c.id;
+		b.textContent = c.label;
+		b.setAttribute(
+			"aria-pressed",
+			state.activeCat === c.id ? "true" : "false",
+		);
+		catRow.appendChild(b);
+	}
+
+	varRow.textContent = "";
+	for (const r of ROUTINES) {
+		if (r.category !== state.activeCat) continue;
+		const b = el("button", "routines__var") as HTMLButtonElement;
+		b.type = "button";
+		b.dataset.routine = r.id;
+		b.title = r.hint;
+		const active = isRoutineActive(r);
+		b.setAttribute("aria-pressed", active ? "true" : "false");
+		b.append(
+			textEl("span", "routines__var-code", r.code),
+			textEl("span", "routines__var-label", r.label),
+			textEl("span", "routines__var-count", String(r.ids.length)),
+		);
+		varRow.appendChild(b);
+	}
+}
+
 function togglePick(id: string): void {
 	if (state.picked.has(id)) {
 		state.picked.delete(id);
@@ -465,9 +540,12 @@ function updatePickedUI(): void {
 		document.body.classList.toggle("workout-active", n > 0);
 		const countEl = $(".workout-tray__count strong", tray);
 		if (countEl) countEl.textContent = String(n);
-		const shareBtn = $<HTMLButtonElement>(".workout-tray__share", tray);
-		if (shareBtn && shareBtn.textContent !== "Copied ✓") {
-			shareBtn.textContent = n > 0 ? "Copy share link" : "Copy share link";
+		const hint = $(".workout-tray__hint", tray);
+		if (hint) {
+			const r = currentRoutine();
+			hint.textContent = r
+				? `${categoryLabel(r.category)} · ${r.code} ${r.label} — tap exercises to tweak`
+				: "Saved in the URL — share the link, no login needed.";
 		}
 	}
 
@@ -494,7 +572,14 @@ function updatePickedUI(): void {
 		ov.setAttribute("aria-pressed", picked ? "true" : "false");
 		ov.classList.toggle("is-picked", picked);
 		const label = $(".overlay__pick-label", ov);
-		if (label) label.textContent = picked ? "In workout ✓" : "＋ Add to workout";
+		if (label)
+			label.textContent = picked ? "In workout ✓" : "＋ Add to workout";
+	}
+
+	// routine chips: a routine is only "active" while the selection matches it exactly
+	for (const b of rootEl!.querySelectorAll<HTMLButtonElement>(".routines__var")) {
+		const r = ROUTINES.find((x) => x.id === b.dataset.routine);
+		b.setAttribute("aria-pressed", r && isRoutineActive(r) ? "true" : "false");
 	}
 }
 
@@ -510,9 +595,11 @@ function legacyCopy(text: string): boolean {
 	try {
 		// execCommand is deprecated but remains the only last-resort copy path
 		// outside the async Clipboard API; access it without the typed signature.
-		const execCopy = (document as unknown as {
-			execCommand(cmd: string): boolean;
-		}).execCommand;
+		const execCopy = (
+			document as unknown as {
+				execCommand(cmd: string): boolean;
+			}
+		).execCommand;
 		ok = execCopy.call(document, "copy");
 	} catch {
 		ok = false;
@@ -757,6 +844,18 @@ function syncControls(): void {
 function bindEvents(): void {
 	rootEl!.addEventListener("click", (ev) => {
 		const t = ev.target as HTMLElement;
+		const catBtn = t.closest<HTMLButtonElement>(".routines__cat");
+		if (catBtn && catBtn.dataset.cat) {
+			state.activeCat = catBtn.dataset.cat as RoutineCategory;
+			renderRoutines();
+			return;
+		}
+		const routineBtn = t.closest<HTMLButtonElement>(".routines__var");
+		if (routineBtn && routineBtn.dataset.routine) {
+			const r = ROUTINES.find((x) => x.id === routineBtn.dataset.routine);
+			if (r) applyRoutine(r);
+			return;
+		}
 		const seg = t.closest<HTMLButtonElement>(".seg__btn[data-side]");
 		if (seg) {
 			state.side = seg.dataset.side as State["side"];
@@ -886,12 +985,17 @@ export async function init(root: HTMLElement): Promise<void> {
 		if (!state.all.some((e) => e.id === id)) state.picked.delete(id);
 	}
 
+	// if the restored selection is exactly a routine, surface its category
+	const matched = currentRoutine();
+	if (matched) state.activeCat = matched.category;
+
 	renderStats();
 	populateSelects();
 	syncControls();
 	bindEvents();
 	applyFilters();
 	renderGrid(false);
+	renderRoutines();
 	updatePickedUI();
 	writeParams();
 }

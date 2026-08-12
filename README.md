@@ -32,6 +32,11 @@ names, equipment and movement patterns, with manual overrides. See the
   with the link sees the same workout instantly. No account, no server, no
   auth surface; works unchanged on the static Pages deployment. The
   floating tray offers *Copy share link* and *Clear*.
+- **Quick routines — 28 predetermined sets**: 4 curated routines per focus
+  area (Full body, Core, Lower, Upper, Running, Cycling, Swimming —
+  Strength, Hypertrophy, Unilateral-style and a bodyweight-only **No
+  equipment** variant). One click fills the selection; the shared URL
+  carries the exact exercise list.
 - **Detail panel**: slide-over with the animation, the side-mode coaching
   rationale, numbered instructions, target & involved muscles, and
   prev/next navigation (`←`/`→`, `Esc` to close, `/` to search).
